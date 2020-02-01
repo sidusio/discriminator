@@ -25,7 +25,7 @@ type Modifier struct {
 // NewModifier parses a text for modifiers
 //
 // Every line that starts with a "+" will be parsed as an addition,
-// additions have a key and a value seperated by a "="
+// additions have a key and a value separated by a "="
 // ex. "+my.key=value"
 // Every line that starts with a "-" will be parsed as a deletion,
 // deletions only has a key

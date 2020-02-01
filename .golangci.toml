@@ -1,0 +1,43 @@
+[run]
+modules-download-mode = "readonly"
+
+[linters]
+enable = [
+    "dupl",
+    "interfacer",
+    "funlen",
+    "gofmt",
+    "goimports",
+    "unparam",
+    "maligned",
+    "whitespace",
+    "unconvert",
+    "nakedret",
+    "goconst",
+    "depguard",
+    "gocognit",
+    "gocritic",
+    "misspell",
+    "gosec",
+    "lll",
+    "goprintffuncname",
+    "scopelint",
+    "prealloc",
+    "gocyclo",
+    "gochecknoinits",
+    "rowserrcheck",
+    "bodyclose",
+    "godox",
+    "dogsled"
+]
+fast = false
+
+[issues]
+new-from-rev = "bbe56b9e1847384f4aa90f6941fc7e6df8ed4263" # Should eventually be removed
+
+[[issues.exclude-rules]]
+  path = "_test\\.go"
+  linters = [
+    "funlen",
+    "scopelint"
+  ]

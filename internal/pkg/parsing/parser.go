@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	//nolint:lll
 	validatorRegex      = regexp.MustCompile(`^\s*(\s*|[^\(\s\)\:]+\((\s*|[^\(\s\)\:]+\:\s*[^\(\s\)\:]+(\,\s*[^\(\s\)\:]+\:\s*[^\(\s\)\:]+)*)\)(\s*\|\s*[^\(\s\)\:]+\((\s*|[^\(\s\)\:]+\:\s*[^\(\s\)\:]+(\,\s*[^\(\s\)\:]+\:\s*[^\(\s\)\:]+)*)\))*)\s*$`)
 	invalidFormatErrorF = "input \"%s\" does not follow the expected format"
 )

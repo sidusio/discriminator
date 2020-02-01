@@ -8,7 +8,6 @@ import (
 )
 
 func TestModifier(t *testing.T) {
-
 	tests := []struct {
 		name         string
 		inputLabels  map[string]string

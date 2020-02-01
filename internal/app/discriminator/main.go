@@ -21,8 +21,9 @@ var (
 )
 
 // Run runs the application for one iteration
-func Run() error {
+func Run() error { //nolint:funlen
 	ctx := context.Background()
+
 	logrus.WithContext(ctx).Infof("Building templates directory...")
 	tmpls, err := templates.LoadTemplatesFromPath(ctx, templatesPath, extension)
 	if err != nil {
@@ -48,28 +49,35 @@ func Run() error {
 	if err != nil {
 		return err
 	}
+
 	containers, err := dockerService.GetContainers(ctx, includeStopped)
 	if err != nil {
 		return err
 	}
 	logrus.WithContext(ctx).Infof("Retrieved %d containers from the docker client", len(containers))
+
 	for _, container := range containers {
 		value, ok := container.Labels[applicationLabel]
 		if ok {
 			logrus.WithContext(ctx).Infof("Processing container %s (%s) with options: %v", container.Name, container.ID, value)
+
 			modifiers, err := parser.Process(ctx, value, templates.ContainerData{
 				Labels: container.Labels,
 			})
 			if err != nil {
 				logrus.WithError(err).Errorf("encountered error while processing container %s (%s)", container.Name, container.ID)
 			}
-			newLabels := modifiers.Apply(container.Labels)
 
+			newLabels := modifiers.Apply(container.Labels)
 			if !stringMapEquals(newLabels, container.Labels) {
 				logrus.WithContext(ctx).Infof("Updating %s (%s) with new labels", container.Name, container.ID)
 				err = dockerService.SetLabels(ctx, container.ID, newLabels)
 				if err != nil {
-					logrus.WithError(err).Errorf("encountered error while setting labels on container %s (%s)", container.Name, container.ID)
+					logrus.WithError(err).Errorf(
+						"encountered error while setting labels on container %s (%s)",
+						container.Name,
+						container.ID,
+					)
 				}
 			}
 		}
@@ -82,16 +90,20 @@ func stringMapEquals(a, b map[string]string) bool {
 	if a == nil && b == nil {
 		return true
 	}
+
 	if a == nil || b == nil {
 		return false
 	}
+
 	if len(a) != len(b) {
 		return false
 	}
+
 	for key, value := range a {
 		if bValue, ok := b[key]; bValue != value || !ok {
 			return false
 		}
 	}
+
 	return true
 }
