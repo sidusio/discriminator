@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	err := discriminator.Run()
+	err := discriminator.Start()
 	if err != nil {
 		logrus.WithError(err).Fatalf("Application stopped with error")
 	}

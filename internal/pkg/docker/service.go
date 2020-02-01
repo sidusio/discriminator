@@ -26,6 +26,10 @@ func NewService(_ context.Context, dockerClient Client) (*Service, error) {
 	return &c, nil
 }
 
+func (s *Service) Close() error {
+	return s.dockerClient.Close()
+}
+
 // GetContainers retrieves a list of containers from the configured docker endpoint
 func (s *Service) GetContainers(ctx context.Context, includeStopped bool) ([]Container, error) {
 	dockerContainers, err := s.dockerClient.ContainerList(ctx, types.ContainerListOptions{

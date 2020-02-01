@@ -2,6 +2,9 @@ package discriminator
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -18,38 +21,88 @@ var (
 	templatesPath    = "./templates"
 	extension        = ".tmpl"
 	includeStopped   = false
+	interval         = 5 * time.Minute
 )
 
-// Run runs the application for one iteration
-func Run() error { //nolint:funlen
-	ctx := context.Background()
+func Start() error {
+	ctx := context.WithValue(context.Background(), "phase", "setup")
 
+	logrus.WithContext(ctx).Infof("Setting up necessary services")
+	dockerService, parser, err := setup(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "failed during setup")
+	}
+	defer func() {
+		err := dockerService.Close()
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not close docker service")
+		}
+	}()
+	logrus.WithContext(ctx).Infof("Setup completed")
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	defer signal.Stop(c)
+
+	ctx = context.WithValue(ctx, "phase", "operating")
+	stop := false
+	for {
+		logrus.WithContext(ctx).Infof("Starting iteration...")
+		ctx := context.WithValue(ctx, "runStartedAt", time.Now())
+		err := run(ctx, dockerService, parser)
+		if err != nil {
+			return err
+		}
+		logrus.WithContext(ctx).Infof("Iteration completed, sleeping for %.0f minutes.", interval.Minutes())
+
+		select {
+		case <-c:
+			stop = true
+			logrus.WithContext(ctx).Infof("Received stop signal")
+			break
+		case <-time.After(interval):
+			break
+		}
+
+		if stop {
+			break
+		}
+	}
+	return nil
+}
+
+// Creates all services needed to run the application
+func setup(ctx context.Context) (*docker.Service, parsing.Parser, error) {
 	logrus.WithContext(ctx).Infof("Building templates directory...")
 	tmpls, err := templates.LoadTemplatesFromPath(ctx, templatesPath, extension)
 	if err != nil {
-		return errors.Wrapf(err, "failed to load templates")
+		return nil, parsing.Parser{}, errors.Wrapf(err, "failed to load templates")
 	}
 	templateDirectory, err := templates.NewDirectory(ctx, tmpls, extension)
 	if err != nil {
-		return err
+		return nil, parsing.Parser{}, errors.Wrapf(err, "failed to create template directory")
 	}
 	logrus.WithContext(ctx).Infof("Built templates directory with %d templates", templateDirectory.Count(ctx))
 
 	parser, err := parsing.NewParser(ctx, templateDirectory)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create parser")
+		return nil, parsing.Parser{}, errors.Wrapf(err, "failed to create parser")
 	}
 
 	logrus.WithContext(ctx).Infof("Connecting to docker client")
 	dockerClient, err := client.NewEnvClient()
 	if err != nil {
-		return errors.Wrapf(err, "failed to create docker client from environment")
+		return nil, parsing.Parser{}, errors.Wrapf(err, "failed to create docker client from environment")
 	}
 	dockerService, err := docker.NewService(ctx, dockerClient)
 	if err != nil {
-		return err
+		return nil, parsing.Parser{}, errors.Wrapf(err, "failed to create docker service")
 	}
+	return dockerService, parser, nil
+}
 
+// Run runs the application for one iteration
+func run(ctx context.Context, dockerService *docker.Service, parser parsing.Parser) error {
 	containers, err := dockerService.GetContainers(ctx, includeStopped)
 	if err != nil {
 		return err
