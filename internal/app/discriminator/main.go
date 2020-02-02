@@ -27,6 +27,9 @@ func Start() error {
 	}
 	logrus.WithContext(ctx).Infof("Settings loaded")
 
+	logrus.SetFormatter(s.LogFormatter())
+	logrus.SetLevel(s.LogLevel())
+
 	logrus.WithContext(ctx).Infof("Setting up necessary services")
 	dockerService, parser, err := setup(ctx, s)
 	if err != nil {

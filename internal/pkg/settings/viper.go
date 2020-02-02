@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/spf13/viper"
 )
 
@@ -21,6 +23,9 @@ const (
 	includeStoppedContainers = "include-stopped-containers"
 
 	runInterval = "run-interval"
+
+	logLevel  = "log-level"
+	logFormat = "log-format"
 )
 
 type Settings struct {
@@ -48,6 +53,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault(includeStoppedContainers, false)
 
 	v.SetDefault(runInterval, 5*time.Minute)
+
+	v.SetDefault(logLevel, "info")
+	v.SetDefault(logFormat, "text")
 }
 
 func (s Settings) TemplatesPath() string {
@@ -68,4 +76,28 @@ func (s Settings) IncludeStoppedContainers() bool {
 
 func (s Settings) RunInterval() time.Duration {
 	return s.v.GetDuration(runInterval)
+}
+
+func (s Settings) LogFormatter() logrus.Formatter {
+	in := s.v.GetString(logFormat)
+	switch strings.ToLower(strings.TrimSpace(in)) {
+	case "text":
+		return &logrus.TextFormatter{}
+	case "json":
+		return &logrus.JSONFormatter{}
+	default:
+		logrus.Warnf("Could not parse log formatter from %s, falling back to text", in)
+	}
+	return &logrus.TextFormatter{}
+}
+
+func (s Settings) LogLevel() logrus.Level {
+	in := s.v.GetString(logLevel)
+	in = strings.ToLower(strings.TrimSpace(in))
+	lvl, err := logrus.ParseLevel(in)
+	if err != nil {
+		logrus.Warnf("Could not parse log level from %s, falling back to INFO", in)
+		return logrus.InfoLevel
+	}
+	return lvl
 }
