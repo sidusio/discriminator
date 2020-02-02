@@ -7,8 +7,6 @@
 
 Automatically add labels to docker containers.
 
-[[TOC]]
-
 ## Getting Started
 This application works by looking for a labels (default: `io.sidus.discriminator`) associated value (instructions)
 and specified templates to add or remove certain labels from that container.
