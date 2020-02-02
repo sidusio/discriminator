@@ -63,20 +63,18 @@ func NewModifier(ctx context.Context, text io.Reader) (Modifier, error) {
 // Apply applies a modifier to a set of labels
 //
 // deletions always trumps additions
-func (m Modifier) Apply(labels map[string]string) map[string]string {
+func (m Modifier) Apply(labels map[string]string) {
 	for key, value := range m.additions {
 		labels[key] = value
 	}
 	for _, key := range m.deletions {
 		delete(labels, key)
 	}
-	return labels
 }
 
 // Apply applies a set of modifers to a set of labels in sequential order
-func (ms Modifiers) Apply(labels map[string]string) map[string]string {
+func (ms Modifiers) Apply(labels map[string]string) {
 	for _, m := range ms {
-		labels = m.Apply(labels)
+		m.Apply(labels)
 	}
-	return labels
 }

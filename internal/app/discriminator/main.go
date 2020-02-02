@@ -116,6 +116,7 @@ func run(ctx context.Context, dockerService *docker.Service, parser parsing.Pars
 		value, ok := container.Labels[s.ContainerLabel()]
 		if ok {
 			logrus.WithContext(ctx).Infof("Processing container %s (%s) with options: %v", container.Name, container.ID, value)
+			logrus.WithContext(ctx).Debugf("Containers initial labels: %+v", container.Labels)
 
 			modifiers, err := parser.Process(ctx, value, templates.ContainerData{
 				Labels: container.Labels,
@@ -124,7 +125,10 @@ func run(ctx context.Context, dockerService *docker.Service, parser parsing.Pars
 				logrus.WithError(err).Errorf("encountered error while processing container %s (%s)", container.Name, container.ID)
 			}
 
-			newLabels := modifiers.Apply(container.Labels)
+			logrus.WithContext(ctx).Debugf("Applying modifiers %+v", modifiers)
+			newLabels := stringMapClone(container.Labels)
+			modifiers.Apply(newLabels)
+			logrus.WithContext(ctx).Debugf("Container labels after applied modifiers: %+v", newLabels)
 			if !stringMapEquals(newLabels, container.Labels) {
 				logrus.WithContext(ctx).Infof("Updating %s (%s) with new labels", container.Name, container.ID)
 				err = dockerService.SetLabels(ctx, container.ID, newLabels)
@@ -141,8 +145,24 @@ func run(ctx context.Context, dockerService *docker.Service, parser parsing.Pars
 	return nil
 }
 
+// stringMapClone clones a string map
+func stringMapClone(original map[string]string) map[string]string {
+	if original == nil {
+		return nil
+	}
+	newMap := make(map[string]string)
+	for key, value := range original {
+		newMap[key] = value
+	}
+	return newMap
+}
+
 // stringMapEquals compare two maps of type map[string]string
 func stringMapEquals(a, b map[string]string) bool {
+	if &a == &b {
+		return true
+	}
+
 	if a == nil && b == nil {
 		return true
 	}
