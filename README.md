@@ -29,9 +29,9 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock -v yourTemplatesDirector
 
 ### Configuration
 The application is configured through environment variables
-----------------------------------------------------------------------------------------------------------------------------------
+
 | Enviornment Variable                     | Default value          | Description                                                |
-|------------------------------------------|------------------------|------------------------------------------------------------|
+|:-----------------------------------------|:-----------------------|:-----------------------------------------------------------|
 | DISCRIMINATOR_TEMPLATES_PATH             | /templates             | Directory with your templates                              |
 | DISCRIMINATOR_TEMPLATES_EXTENSION        | .tmpl                  | The extension of your templates                            |
 | DISCRIMINATOR_CONTAINERS_LABEL           | io.sidus.discriminator | The label to look at for instructions                      |
@@ -39,7 +39,7 @@ The application is configured through environment variables
 | DISCRIMINATOR_RUN_INTERVAL               | 5m                     | How often the application should go through the containers |
 | DISCRIMINATOR_LOG_LEVEL                  | info                   | debug/info/warn/error                                      |
 | DISCRIMINATOR_LOG_FORMAT                 | text                   | text/json                                                  |
-----------------------------------------------------------------------------------------------------------------------------------
+
 
 ### Templates
 Templates are called by instructions to modify the labels of the container.
