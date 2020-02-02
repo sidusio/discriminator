@@ -120,6 +120,7 @@ func run(ctx context.Context, dockerService *docker.Service, parser parsing.Pars
 
 			modifiers, err := parser.Process(ctx, value, templates.ContainerData{
 				Labels: container.Labels,
+				Name:   container.Name,
 			})
 			if err != nil {
 				logrus.WithError(err).Errorf("encountered error while processing container %s (%s)", container.Name, container.ID)

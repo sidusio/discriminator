@@ -9,4 +9,5 @@ type Data struct {
 // ContainerData is a part of the template parsing data
 type ContainerData struct {
 	Labels map[string]string
+	Name   string
 }
