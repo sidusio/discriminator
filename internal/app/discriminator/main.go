@@ -13,22 +13,22 @@ import (
 
 	"sidus.io/discriminator/internal/pkg/docker"
 	"sidus.io/discriminator/internal/pkg/parsing"
+	"sidus.io/discriminator/internal/pkg/settings"
 	"sidus.io/discriminator/internal/pkg/templates"
-)
-
-var (
-	applicationLabel = "io.sidus.discriminator"
-	templatesPath    = "./templates"
-	extension        = ".tmpl"
-	includeStopped   = false
-	interval         = 5 * time.Minute
 )
 
 func Start() error {
 	ctx := context.WithValue(context.Background(), "phase", "setup")
 
+	logrus.WithContext(ctx).Infof("Loading settings")
+	s, err := settings.NewSettings(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "failed to load settings")
+	}
+	logrus.WithContext(ctx).Infof("Settings loaded")
+
 	logrus.WithContext(ctx).Infof("Setting up necessary services")
-	dockerService, parser, err := setup(ctx)
+	dockerService, parser, err := setup(ctx, s)
 	if err != nil {
 		return errors.Wrapf(err, "failed during setup")
 	}
@@ -49,18 +49,18 @@ func Start() error {
 	for {
 		logrus.WithContext(ctx).Infof("Starting iteration...")
 		ctx := context.WithValue(ctx, "runStartedAt", time.Now())
-		err := run(ctx, dockerService, parser)
+		err := run(ctx, dockerService, parser, s)
 		if err != nil {
 			return err
 		}
-		logrus.WithContext(ctx).Infof("Iteration completed, sleeping for %.0f minutes.", interval.Minutes())
+		logrus.WithContext(ctx).Infof("Iteration completed, sleeping for %.0f minutes.", s.RunInterval().Minutes())
 
 		select {
 		case <-c:
 			stop = true
 			logrus.WithContext(ctx).Infof("Received stop signal")
 			break
-		case <-time.After(interval):
+		case <-time.After(s.RunInterval()):
 			break
 		}
 
@@ -72,13 +72,13 @@ func Start() error {
 }
 
 // Creates all services needed to run the application
-func setup(ctx context.Context) (*docker.Service, parsing.Parser, error) {
+func setup(ctx context.Context, s settings.Settings) (*docker.Service, parsing.Parser, error) {
 	logrus.WithContext(ctx).Infof("Building templates directory...")
-	tmpls, err := templates.LoadTemplatesFromPath(ctx, templatesPath, extension)
+	tmpls, err := templates.LoadTemplatesFromPath(ctx, s.TemplatesPath(), s.TemplatesExtension())
 	if err != nil {
 		return nil, parsing.Parser{}, errors.Wrapf(err, "failed to load templates")
 	}
-	templateDirectory, err := templates.NewDirectory(ctx, tmpls, extension)
+	templateDirectory, err := templates.NewDirectory(ctx, tmpls, s.TemplatesExtension())
 	if err != nil {
 		return nil, parsing.Parser{}, errors.Wrapf(err, "failed to create template directory")
 	}
@@ -102,15 +102,15 @@ func setup(ctx context.Context) (*docker.Service, parsing.Parser, error) {
 }
 
 // Run runs the application for one iteration
-func run(ctx context.Context, dockerService *docker.Service, parser parsing.Parser) error {
-	containers, err := dockerService.GetContainers(ctx, includeStopped)
+func run(ctx context.Context, dockerService *docker.Service, parser parsing.Parser, s settings.Settings) error {
+	containers, err := dockerService.GetContainers(ctx, s.IncludeStoppedContainers())
 	if err != nil {
 		return err
 	}
 	logrus.WithContext(ctx).Infof("Retrieved %d containers from the docker client", len(containers))
 
 	for _, container := range containers {
-		value, ok := container.Labels[applicationLabel]
+		value, ok := container.Labels[s.ContainerLabel()]
 		if ok {
 			logrus.WithContext(ctx).Infof("Processing container %s (%s) with options: %v", container.Name, container.ID, value)
 
