@@ -1,5 +1,6 @@
 # discriminator
 [![GoDoc](https://godoc.org/github.com/sidusIO/discriminator?status.svg)](https://godoc.org/github.com/sidusIO/discriminator)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sidusio/discriminator)](https://goreportcard.com/report/github.com/sidusio/discriminator)
 [![Build Status](https://travis-ci.com/sidusIO/discriminator.svg?branch=master)](https://travis-ci.com/sidusIO/discriminator)
 [![Image size](https://images.microbadger.com/badges/image/sidusio/discriminator.svg)](https://microbadger.com/images/sidusio/discriminator "Get your own image badge on microbadger.com")
