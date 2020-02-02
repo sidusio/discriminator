@@ -80,7 +80,8 @@ func TestModifier(t *testing.T) {
 				t.Errorf("NewModifier() error = %v", err)
 				return
 			}
-			got := m.Apply(tt.inputLabels)
+			m.Apply(tt.inputLabels)
+			got := tt.inputLabels
 			if !reflect.DeepEqual(got, tt.outputLabels) {
 				t.Errorf("Labels got = %v, want %v", got, tt.outputLabels)
 			}
@@ -111,8 +112,8 @@ func TestModifiers_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.ms.Apply(tt.labels); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Apply() = %v, want %v", got, tt.want)
+			if tt.ms.Apply(tt.labels); !reflect.DeepEqual(tt.labels, tt.want) {
+				t.Errorf("Apply() = %v, want %v", tt.labels, tt.want)
 			}
 		})
 	}
