@@ -22,4 +22,5 @@ type Client interface {
 	ContainerInspect(ctx context.Context, container string) (types.ContainerJSON, error)
 	ContainerStart(ctx context.Context, container string, options types.ContainerStartOptions) error
 	ContainerStop(ctx context.Context, container string, timeout *time.Duration) error
+	NetworkConnect(ctx context.Context, networkID, containerID string, config *network.EndpointSettings) error
 }

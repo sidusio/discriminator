@@ -83,10 +83,7 @@ func (s *Service) SetLabels(ctx context.Context, containerID string, labels map[
 	config := container.Config
 	// Setting labels
 	config.Labels = labels
-	netConfig := network.NetworkingConfig{
-		EndpointsConfig: container.NetworkSettings.Networks,
-	}
-	newID, err := s.dockerClient.ContainerCreate(ctx, config, container.HostConfig, &netConfig, container.Name)
+	newID, err := s.dockerClient.ContainerCreate(ctx, config, container.HostConfig, &network.NetworkingConfig{}, container.Name)
 	if err != nil {
 		// TODO: restore old container
 		return errors.Wrapf(
@@ -94,6 +91,18 @@ func (s *Service) SetLabels(ctx context.Context, containerID string, labels map[
 			"failed to create new container with name: %s, old container can be restored from (id: %s, name:%s)",
 			container.Name, containerID, newName,
 		)
+	}
+
+	for networkName, network := range container.NetworkSettings.Networks {
+		err = s.dockerClient.NetworkConnect(ctx, network.NetworkID, newID.ID, network)
+		if err != nil {
+			// TODO: restore old container
+			return errors.Wrapf(
+				err,
+				"failed to connect new container with name: %s, id: %s to network with name: %s, id: %s , old container can be restored from (id: %s, name:%s)",
+				container.Name, newID.ID, networkName, network.NetworkID, containerID, newName,
+			)
+		}
 	}
 
 	if container.State.Running {
