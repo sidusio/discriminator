@@ -11,6 +11,5 @@ require (
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/viper v1.6.2
-	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
+	github.com/spf13/viper v1.8.0
 )
